@@ -39,6 +39,22 @@ enhancements per application; keep native links, forms, and complete page respon
 when you need a working fallback. The rendering foundation stays in Go; applications
 configure their routes, state, and browser updates.
 
+## Where it fits
+
+Choose the interaction style for each workflow, or combine them in one application:
+
+| Approach | Good fit | User experience |
+| --- | --- | --- |
+| **HTML only** | Administration and inventory tools, document portals, booking forms, catalogs, reports, and approval workflows | Users follow links or submit forms; Go returns the updated page. |
+| **Optional HTMX** | Filtered tables, pagination, inline editing, and server validation feedback | Go returns HTML fragments; HTMX updates the relevant part of the page. |
+| **JavaScript enhancements** | Live charts, chat and notifications, drag-and-drop interfaces, and rich editors | Browser code handles continuous interaction, with Go providing application endpoints and any required HTML. |
+
+With [go-api-kit](https://github.com/renniemaharaj/go-api-kit) handling HTTP and
+Live Components rendering HTML, your application can keep validation, business
+logic, and data access in Go. Add HTMX or custom JavaScript to the screens that
+benefit from it, while keeping other workflows fully functional without JavaScript.
+This combines a native Go backend with the browser experience each application needs.
+
 ## Try the counter
 
 A small Go + HTML starter with increment, decrement, and reset. Works without
