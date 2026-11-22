@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="A live workbench for the Go-native Live Components framework. Measure DOM workloads, rendering, concurrency, and memory with real correctness checks.">
+    <title>Live Components Lab</title>
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/static/app.css">
+    <script src="/static/app.js" defer></script>
+  </head>
+  <body>
+    <svg
+      class="icon-library"
+      aria-hidden="true"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <symbol id="i-cube" viewBox="0 0 24 24"><path d="m12 2 10 5.5v9L12 22 2 16.5v-9L12 2Z M2 7.5l10 6 10-6M12 13.5V22M7 4.7l10 5.7"/></symbol>
+      <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 10 9-8 9 8v11h-7v-7h-4v7H3Z"/></symbol>
+      <symbol id="i-bolt" viewBox="0 0 24 24"><path d="m13 2-9 12h7l-1 8 10-13h-7Z"/></symbol>
+      <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V12m8 8V7m8 13V2"/></symbol>
+      <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 2 10 5-10 5L2 7Zm-10 10 10 5 10-5M2 17l10 5 10-5"/></symbol>
+      <symbol id="i-code" viewBox="0 0 24 24"><path d="m7 5-6 7 6 7m10-14 6 7-6 7M14 3l-4 18"/></symbol>
+      <symbol id="i-table" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 8h18M3 14h18M9 8v13"/></symbol>
+      <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 11v6m0-11v1"/></symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+      <symbol id="i-chip" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/><path d="M9 1v4m6-4v4M9 19v4m6-4v4M1 9h4m-4 6h4m14-6h4m-4 6h4"/></symbol>
+      <symbol id="i-alert" viewBox="0 0 24 24"><path d="m12 2 11 19H1ZM12 8v6m0 3v1"/></symbol>
+      <symbol id="i-play" viewBox="0 0 24 24"><path d="m7 3 14 9-14 9Z"/></symbol>
+      <symbol id="i-terminal" viewBox="0 0 24 24"><path d="m3 5 7 7-7 7m10 0h8"/></symbol>
+      <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 3v6h-6M3 21v-6h6M4.6 8a8 8 0 0 1 13-3L21 9M3 15l3.4 4a8 8 0 0 0 13-3"/></symbol>
+      <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H4v20h16V8ZM14 2v6h6M8 12h8m-8 4h8"/></symbol>
+      <symbol id="i-trend" viewBox="0 0 24 24"><path d="M3 3v18h18M6 16l5-7 4 3 6-7m-5 0h5v5"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></symbol>
+      <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 2v13m-5-5 5 5 5-5M3 17v5h18v-5"/></symbol>
+    </svg>
+    <aside class="sidebar">
+      <a class="brand" href="#dashboard" aria-label="Live Components Lab dashboard">
+        <span class="brand-icon"><svg><use href="#i-cube"/></svg></span>
+        <span><strong>Live Components Lab</strong><small>Go · HTML · Live Components</small></span>
+      </a>
+      <div class="nav-caption">WORKSPACE</div>
+      <nav aria-label="Main navigation">
+        <a class="nav-item active" href="#dashboard"><svg><use href="#i-home"/></svg>Dashboard</a>
+        <a class="nav-item" href="#stress-tests"><svg><use href="#i-bolt"/></svg>Stress Tests</a>
+        <a class="nav-item" href="#benchmarks"><svg><use href="#i-chart"/></svg>Benchmarks</a>
+        <a class="nav-item" href="#workloads"><svg><use href="#i-layers"/></svg>Workloads</a>
+        <a class="nav-item" href="#components"><svg><use href="#i-code"/></svg>Components</a>
+        <a class="nav-item" href="#results"><svg><use href="#i-table"/></svg>Results<span id="results-count" class="nav-count">0</span></a>
+        <a class="nav-item" href="#about"><svg><use href="#i-info"/></svg>About</a>
+      </nav>
+      <div class="sidebar-bottom">
+        <span class="connection-dot" id="connection-dot"></span>
+        <span id="connection-label">Connecting to runtime</span>
+        <small>LOCAL DEVELOPMENT ENVIRONMENT</small>
+      </div>
+    </aside>
+    <main id="dashboard" class="workspace">
+      <header class="page-header">
+        <div>
+          <div class="eyebrow">THE FRAMEWORK WORKBENCH</div>
+          <h1>Live Components Lab<span class="version">LAB</span></h1>
+          <p>Stress testing, benchmarking, and reliability verification.</p>
+        </div>
+        <div class="header-actions">
+          <span class="run-indicator" id="run-indicator"><span class="state-dot"></span><span id="run-status">Ready to test</span></span>
+          <button type="button" id="stop-button" class="button stop-button" disabled><span class="stop-square"></span>Stop</button>
+        </div>
+      </header>
+      <section class="metrics-grid" aria-label="Performance summary">
+        <article class="metric-card">
+          <svg><use href="#i-layers"/></svg>
+          <div>
+            <h2>Components</h2>
+            <strong id="metric-components">—</strong>
+            <small>Prepared instances</small>
+          </div>
+        </article>
+        <article class="metric-card">
+          <svg><use href="#i-code"/></svg>
+          <div>
+            <h2>DOM Nodes</h2>
+            <strong id="metric-nodes">—</strong>
+            <small>Prepared dataset</small>
+          </div>
+        </article>
+        <article class="metric-card">
+          <svg class="green"><use href="#i-bolt"/></svg>
+          <div>
+            <h2 id="throughput-label">Operations / s</h2>
+            <strong id="metric-throughput" class="green">—</strong>
+            <small id="throughput-unit">Awaiting a workload</small>
+          </div>
+        </article>
+        <article class="metric-card">
+          <svg><use href="#i-clock"/></svg>
+          <div>
+            <h2>Render p95</h2>
+            <strong id="metric-render">—</strong>
+            <small>Serialization only</small>
+          </div>
+        </article>
+        <article class="metric-card">
+          <svg><use href="#i-chip"/></svg>
+          <div>
+            <h2>Heap Usage</h2>
+            <strong id="metric-heap">—</strong>
+            <small>Current Go heap</small>
+          </div>
+        </article>
+        <article class="metric-card">
+          <svg class="red"><use href="#i-alert"/></svg>
+          <div>
+            <h2>Failures</h2>
+            <strong id="metric-failures">—</strong>
+            <small>Failed operations</small>
+          </div>
+        </article>
+      </section>
+      <div class="dashboard-grid">
+        <section class="panel chart-panel" id="benchmarks">
+          <div class="panel-header">
+            <h2><svg><use href="#i-trend"/></svg><span id="chart-title">Workload Throughput</span></h2>
+            <label class="select-control"><span class="sr-only">Chart viewing window</span><select id="chart-window"><option value="30">Last 30 seconds</option><option value="60">Last 60 seconds</option><option value="120">Last 2 minutes</option></select></label>
+          </div>
+          <div class="chart-key">
+            <span><i></i><span id="chart-unit">Verified operations / second</span></span>
+            <span class="subtle" id="chart-sample-count">No samples yet</span>
+          </div>
+          <div class="chart-wrap">
+            <svg id="throughput-chart" viewBox="0 0 760 225" role="img" aria-label="Measured workload throughput over time"></svg>
+            <div class="chart-empty" id="chart-empty">
+              <span class="empty-chart-icon"><svg><use href="#i-chart"/></svg></span>
+              <strong>Your next benchmark starts here</strong>
+              <p>Run a test to see real throughput, live.</p>
+            </div>
+          </div>
+          <div class="chart-footer">
+            <span><span class="small-dot"></span>Live measurements · 500 ms sampling</span>
+            <span id="progress-label">No test running</span>
+          </div>
+        </section>
+        <section class="panel run-panel" id="stress-tests">
+          <div class="panel-header">
+            <h2><svg><use href="#i-play"/></svg>Run Test</h2>
+            <span class="panel-tag">CONFIGURATION</span>
+          </div>
+          <form id="run-form">
+            <label for="suite-select">Test suite</label>
+            <select id="suite-select" name="suite">
+              <option value="all">All test suites</option>
+            </select>
+            <label for="components-input">Components</label>
+            <input id="components-input" name="components" type="number" min="1" max="10000" value="1000" required>
+            <label for="iterations-input">Iterations</label>
+            <input id="iterations-input" name="iterations" type="number" min="1" max="10000" value="100" required>
+            <label for="concurrency-input">Concurrency</label>
+            <select id="concurrency-input" name="concurrency">
+              <option>1</option>
+              <option selected>10</option>
+              <option>100</option>
+              <option>500</option>
+              <option>1000</option>
+            </select>
+            <details class="advanced-settings">
+              <summary>Workload options</summary>
+              <div class="advanced-grid">
+                <label for="operation-select">DOM operation</label>
+                <select id="operation-select" name="operation"></select>
+                <label for="shape-select">Tree shape</label>
+                <select id="shape-select" name="shape">
+                  <option value="wide">Wide / large</option>
+                  <option value="small">Small components</option>
+                  <option value="medium">Medium components</option>
+                  <option value="deep">Deep (bounded)</option>
+                  <option value="mutated">After mutations</option>
+                </select>
+                <label for="scenario-select">HTTP scenario</label>
+                <select id="scenario-select" name="scenario">
+                  <option value="independent">Independent documents</option>
+                  <option value="shared-read">Shared, immutable reads</option>
+                  <option value="shared-mutation" disabled>Shared mutation: unsupported</option>
+                </select>
+                <label for="timeout-input">Timeout / suite</label>
+                <input id="timeout-input" name="timeout_seconds" type="number" min="1" max="120" value="30" required>
+              </div>
+            </details>
+            <div class="form-error" id="run-error" role="alert" hidden></div>
+            <button class="button primary run-button" id="run-button" type="submit"><svg><use href="#i-play"/></svg>Run Test</button>
+            <p class="form-note">Bounded workers. Cancellable runs. Verified output.</p>
+          </form>
+        </section>
+        <section class="panel suites-panel" id="workloads">
+          <div class="panel-header">
+            <h2><svg><use href="#i-layers"/></svg>Test Suites</h2>
+            <span class="subtle">6 workloads</span>
+          </div>
+          <div class="table-scroll">
+            <table class="suites-table">
+              <thead class="sr-only">
+                <tr>
+                  <th>Suite</th>
+                  <th>Description</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="suite-list"></tbody>
+            </table>
+          </div>
+        </section>
+        <section class="panel output-panel">
+          <div class="panel-header">
+            <h2><svg><use href="#i-terminal"/></svg>Live Output<span class="live-label">LIVE</span></h2>
+            <button type="button" id="clear-output" class="button small">Clear</button>
+          </div>
+          <div
+            id="live-output"
+            class="terminal"
+            role="log"
+            aria-live="polite"
+            aria-label="Benchmark output"
+          >
+            <div class="terminal-intro"><span class="terminal-prompt">›</span> Live Components Lab initialized.</div>
+            <div class="terminal-muted">Waiting for a workload. No synthetic results.</div>
+          </div>
+          <div class="terminal-footer">
+            <span id="runtime-details">Connected to the Go runtime</span>
+            <span id="log-count">0 events</span>
+          </div>
+        </section>
+        <section class="panel preview-panel" id="components">
+          <div class="panel-header">
+            <div>
+              <h2><svg><use href="#i-code"/></svg>Component Preview</h2>
+              <p>A real component, rendered with Live Components.</p>
+            </div>
+            <div class="preview-header-controls">
+              <label class="sr-only" for="preview-template">Component template</label>
+              <select id="preview-template">
+                <option value="banner">banner.html</option>
+                <option value="card">card.html</option>
+                <option value="table">table.html</option>
+              </select>
+              <button type="button" class="button small" id="preview-refresh"><svg><use href="#i-refresh"/></svg>Reset</button>
+            </div>
+          </div>
+          <div id="preview-stage" class="preview-stage" aria-live="polite"></div>
+          <div class="preview-controls">
+            <label for="preview-name" class="sr-only">Preview name</label>
+            <input type="text" id="preview-name" value="Ada" maxlength="80" aria-label="Preview name">
+            <button type="button" class="button small" data-preview="text">Set text</button>
+            <button type="button" class="button small" data-preview="attribute">Attribute</button>
+            <button type="button" class="button small" data-preview="class">ClassList</button>
+            <button type="button" class="button small" data-preview="add">Add child</button>
+            <button type="button" class="button small" data-preview="remove">Remove</button>
+            <button type="button" class="button small" data-preview="clone">Clone</button>
+          </div>
+          <details class="preview-source">
+            <summary>Inspect rendered HTML</summary>
+            <pre id="preview-source"></pre>
+          </details>
+          <div class="preview-feedback" id="preview-feedback" role="status">Change the text, mutate the tree, or clone this component.</div>
+        </section>
+        <section class="panel results-panel" id="results">
+          <div class="panel-header">
+            <h2><svg><use href="#i-file"/></svg>Test Results <span class="heading-meta">Latest</span></h2>
+            <button type="button" class="button icon-button" id="download-results" aria-label="Download results as JSON" title="Download results as JSON" disabled><svg><use href="#i-download"/></svg></button>
+          </div>
+          <div class="table-scroll">
+            <table class="results-table">
+              <thead>
+                <tr>
+                  <th>Test</th>
+                  <th>Ops / s</th>
+                  <th>p95</th>
+                  <th>Heap</th>
+                  <th>Result</th>
+                </tr>
+              </thead>
+              <tbody id="results-body">
+                <tr class="empty-results">
+                  <td colspan="5"><svg><use href="#i-file"/></svg><strong>A clean slate</strong><span>Completed tests will appear here.<br>Every result comes from an actual run.</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="results-footer">Session history · Last 60 runs · JSON export</div>
+        </section>
+      </div>
+      <section class="panel detail-panel" id="measurement-details">
+        <div class="panel-header">
+          <h2><svg><use href="#i-chip"/></svg>Measurement Details</h2>
+          <span class="subtle">Latest workload</span>
+        </div>
+        <dl id="detail-metrics">
+          <div>
+            <dt>Verified / attempted</dt>
+            <dd>—</dd>
+          </div>
+          <div>
+            <dt>p50 / p95 / p99</dt>
+            <dd>—</dd>
+          </div>
+          <div>
+            <dt>DOM calls / renders / requests</dt>
+            <dd>—</dd>
+          </div>
+          <div>
+            <dt>Bytes / operation</dt>
+            <dd>—</dd>
+          </div>
+          <div>
+            <dt>Allocations / operation</dt>
+            <dd>—</dd>
+          </div>
+          <div>
+            <dt>GC cycles / pause</dt>
+            <dd>—</dd>
+          </div>
+          <div>
+            <dt>Elapsed / avg latency</dt>
+            <dd>—</dd>
+          </div>
+          <div>
+            <dt>Output / post-GC heap</dt>
+            <dd>—</dd>
+          </div>
+        </dl>
+      </section>
+      <footer class="about-panel" id="about">
+        <div>
+          <svg><use href="#i-cube"/></svg>
+          <strong>Built with Live Components.</strong>
+          <span>Ordinary HTML. Familiar DOM operations. Native Go.</span>
+        </div>
+        <details>
+          <summary>How to read these measurements</summary>
+          <p>Throughput counts verified workload units, not a mixture of DOM calls, renders, and HTTP requests. Local timing excludes setup and correctness checks; throughput includes the complete running loop. Percentiles are histogram upper bounds (at most 3.125% bucket width). Allocation and heap counters cover this Go process, including dashboard activity. Prepared nodes are counted from the rendered workload dataset. They do not include transient clones. Shared mutation is unsupported; immutable shared reads and independent instances are separate scenarios. Endurance results include a post-GC heap sample, not a claim that retained memory is a leak. Limits: 10,000 components, 2,000,000 work items per suite, 1,000 requested workers, 120 seconds, and a sampled 512 MiB heap guard. History is bounded and kept only in this process.</p>
+        </details>
+        <small>LOCAL LAB / NO EXTERNAL SERVICES</small>
+      </footer>
+    </main>
+  </body>
+</html>

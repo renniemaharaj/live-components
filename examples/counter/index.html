@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="A little Go, ordinary HTML, and a counter. Meet Live Components.">
+    <meta name="color-scheme" content="dark">
+    <title>Live Components · A little Go. A lot of possibility.</title>
+    <link rel="icon" type="image/svg+xml" href="/static/logo.svg">
+    <link rel="stylesheet" href="/static/style.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="wordmark" href="/" aria-label="Live Components home">
+        <img src="/static/logo.svg" width="28" height="28" alt="">
+        <span>live components</span>
+      </a>
+      <a class="guide-link" href="#how-it-works">How it works</a>
+    </header>
+
+    <main>
+      <section class="starter" aria-labelledby="title">
+        <div class="hero-logo">
+          <img src="/static/logo.svg" width="144" height="144" alt="Live Components logo">
+        </div>
+        <p class="eyebrow">GO <span>+</span> HTML <span>+</span> YOU</p>
+        <h1 id="title">Live <span>Components</span></h1>
+        <p class="intro">Ordinary HTML. Familiar DOM. Native Go.</p>
+
+        <div class="counter-card">
+          <div class="counter-heading">
+            <span class="counter-label">COUNTER</span>
+            <span class="server-label">Rendered in Go</span>
+          </div>
+          <form action="/counter" method="post">
+            <input id="current-count" type="hidden" name="count" value="0">
+            <div class="counter-controls">
+              <button
+                class="step-button decrement"
+                type="submit"
+                name="action"
+                value="decrement"
+                aria-label="Decrease count"
+              >−</button>
+              <output id="count" aria-label="Current count">0</output>
+              <button
+                class="step-button increment"
+                type="submit"
+                name="action"
+                value="increment"
+                aria-label="Increase count"
+              >+</button>
+            </div>
+            <div class="counter-footer">
+              <span>One click. A little server-side magic.</span>
+              <button class="reset" type="submit" name="action" value="reset">Reset</button>
+            </div>
+          </form>
+        </div>
+
+        <p class="hint">Try the buttons. This works with JavaScript turned off.</p>
+        <div class="features" aria-label="Built with">
+          <span>Go on the server</span>
+          <span>HTML in the browser</span>
+          <span>Zero JavaScript</span>
+        </div>
+
+        <details id="how-it-works" class="how-it-works">
+          <summary>Small example. Real components.</summary>
+          <div class="explanation">
+            <p>The form sends the count to a go-api-kit route. Go changes the value, redirects here, and updates a fresh HTML tree with Live Components.</p>
+            <pre><code><span class="code-comment">// Parse HTML. Find an element. Make it yours.</span>
+page, err := live.Parse(markup)
+<span class="code-keyword">if</span> err != nil {
+    <span class="code-keyword">return</span> err
+}
+
+page.GetElementById(<span class="code-string">"count"</span>).SetTextContent(count)
+<span class="code-keyword">if</span> err := h.Render(http.StatusOK, page); err != nil {
+    log.Printf(<span class="code-string">"render counter: %v"</span>, err)
+}</code></pre>
+            <p class="explanation-note">The count travels in the form and URL. Each request gets its own tree; your template file stays untouched.</p>
+          </div>
+        </details>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <span>A small beginning. Build something great.</span>
+      <span class="footer-stack">Go <span>·</span> HTML <span>·</span> Live Components</span>
+    </footer>
+  </body>
+</html>
