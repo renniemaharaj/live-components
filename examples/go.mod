@@ -1,10 +1,10 @@
-module github.com/renniemaharaj/live-component/examples
+module github.com/renniemaharaj/live-components/examples
 
 go 1.25.3
 
 require (
 	github.com/renniemaharaj/go-api-kit v0.0.0
-	github.com/renniemaharaj/live-component v0.0.0
+	github.com/renniemaharaj/live-components v0.0.0
 	golang.org/x/net v0.40.0
 )
 
@@ -17,4 +17,4 @@ require (
 
 replace github.com/renniemaharaj/go-api-kit => ../../go-api-kit
 
-replace github.com/renniemaharaj/live-component => ..
+replace github.com/renniemaharaj/live-components => ..

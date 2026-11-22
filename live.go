@@ -4,10 +4,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/renniemaharaj/live-component/internal/classlist"
-	"github.com/renniemaharaj/live-component/internal/component"
-	"github.com/renniemaharaj/live-component/internal/document"
-	"github.com/renniemaharaj/live-component/internal/element"
+	"github.com/renniemaharaj/live-components/internal/classlist"
+	"github.com/renniemaharaj/live-components/internal/component"
+	"github.com/renniemaharaj/live-components/internal/document"
+	"github.com/renniemaharaj/live-components/internal/element"
 
 	"golang.org/x/net/html"
 )

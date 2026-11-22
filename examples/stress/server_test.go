@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	live "github.com/renniemaharaj/live-component"
+	live "github.com/renniemaharaj/live-components"
 )
 
 func TestDashboardIsRenderedThroughFramework(t *testing.T) {

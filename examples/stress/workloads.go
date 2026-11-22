@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	live "github.com/renniemaharaj/live-component"
+	live "github.com/renniemaharaj/live-components"
 
 	"github.com/renniemaharaj/go-api-kit/kit"
 	"golang.org/x/net/html"

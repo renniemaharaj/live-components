@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	live "github.com/renniemaharaj/live-component"
+	live "github.com/renniemaharaj/live-components"
 )
 
 func smallConfig(id string) config {

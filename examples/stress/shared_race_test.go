@@ -7,7 +7,7 @@ import (
 	"sync"
 	"testing"
 
-	live "github.com/renniemaharaj/live-component"
+	live "github.com/renniemaharaj/live-components"
 )
 
 // This opt-in probe intentionally violates the framework's ownership contract.

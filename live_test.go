@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	live "github.com/renniemaharaj/live-component"
+	live "github.com/renniemaharaj/live-components"
 )
 
 type domQueries interface {

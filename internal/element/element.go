@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/renniemaharaj/live-component/internal/classlist"
+	"github.com/renniemaharaj/live-components/internal/classlist"
 
 	"golang.org/x/net/html"
 	"golang.org/x/net/html/atom"

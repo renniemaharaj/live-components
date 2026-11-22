@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"time"
 
-	live "github.com/renniemaharaj/live-component"
+	live "github.com/renniemaharaj/live-components"
 
 	"github.com/renniemaharaj/go-api-kit/kit"
 	"github.com/renniemaharaj/go-api-kit/v8"

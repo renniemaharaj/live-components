@@ -1,7 +1,7 @@
 package element
 
 import (
-	"github.com/renniemaharaj/live-component/internal/classlist"
+	"github.com/renniemaharaj/live-components/internal/classlist"
 
 	"github.com/andybalholm/cascadia"
 	"golang.org/x/net/html"

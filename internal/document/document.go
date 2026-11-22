@@ -1,7 +1,7 @@
 package document
 
 import (
-	"github.com/renniemaharaj/live-component/internal/element"
+	"github.com/renniemaharaj/live-components/internal/element"
 
 	"golang.org/x/net/html"
 )

@@ -1,4 +1,4 @@
-module github.com/renniemaharaj/live-component
+module github.com/renniemaharaj/live-components
 
 go 1.24.0
 

@@ -7,7 +7,7 @@ Manipulate server-side HTML in Go using familiar DOM operations.
 Install the rendering library:
 
 ```sh
-go get github.com/renniemaharaj/live-component
+go get github.com/renniemaharaj/live-components
 ```
 
 Start with the [counter example](examples/counter/README.md):
@@ -25,7 +25,7 @@ responses. They require Go 1.25.3 or newer and a sibling `../go-api-kit` checkou
 For a fresh setup, clone both repositories side by side:
 
 ```sh
-git clone https://github.com/renniemaharaj/live-component.git live-components
+git clone https://github.com/renniemaharaj/live-components.git
 git clone https://github.com/renniemaharaj/go-api-kit.git
 cd live-components
 ```
@@ -64,7 +64,7 @@ if err := banner.AppendChild(button); err != nil {
 output := page.Render()
 ```
 
-Import the package as `live "github.com/renniemaharaj/live-component"`. Use `live.Parse(markup)` to parse
+Import the package as `live "github.com/renniemaharaj/live-components"`. Use `live.Parse(markup)` to parse
 an HTML string instead of loading a file. Both functions parse a complete HTML
 document and insert `html`, `head`, and `body` elements as needed.
 

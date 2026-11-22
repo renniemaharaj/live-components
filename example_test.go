@@ -3,7 +3,7 @@ package live_test
 import (
 	"fmt"
 
-	live "github.com/renniemaharaj/live-component"
+	live "github.com/renniemaharaj/live-components"
 )
 
 func Example() {
