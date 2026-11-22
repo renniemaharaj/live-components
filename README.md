@@ -1,6 +1,10 @@
 # Live Components
 
-Manipulate server-side HTML in Go using familiar DOM operations.
+**No JavaScript required.**
+
+A Go foundation for rendering HTML and composing components with familiar DOM
+operations. Build with ordinary HTML, then choose the browser experience your
+application needs.
 
 ```sh
 go get github.com/renniemaharaj/live-components
@@ -17,6 +21,23 @@ if err != nil {
 page.GetElementById("count").SetTextContent("1")
 html := page.Render()
 ```
+
+## HTML first. Enhancements optional.
+
+Live Components parses, modifies, and renders HTML in Go. It requires no browser
+runtime or frontend build step, and can render complete pages or component fragments.
+
+- **HTML only:** use native links and forms. Go processes requests and returns
+  updated pages, including when JavaScript is disabled.
+- **HTMX:** optionally add [HTMX](https://htmx.org/docs/) attributes and its browser
+  library to request HTML fragments and update selected components in place.
+- **Custom JavaScript:** use the same rendered HTML with `fetch`, SSE, WebSockets,
+  or another browser integration suited to your application.
+
+HTMX and JavaScript-based updates require JavaScript in the browser. Choose these
+enhancements per application; keep native links, forms, and complete page responses
+when you need a working fallback. The rendering foundation stays in Go; applications
+configure their routes, state, and browser updates.
 
 ## Try the counter
 
@@ -39,8 +60,10 @@ Open **http://127.0.0.1:9121**.
 
 ## Examples
 
-- [Counter starter](examples/counter/README.md): forms, DOM updates, and HTML responses.
-- [Live Components Lab](examples/stress/README.md): component previews, stress tests, and benchmarks.
+- [Counter starter](examples/counter/README.md): native forms and HTML responses;
+  fully functional with JavaScript disabled.
+- [Live Components Lab](examples/stress/README.md): component previews, stress tests,
+  and benchmarks; uses JavaScript for live telemetry and preview updates.
 
 Each example has its own screenshot, setup instructions, and explanation.
 
