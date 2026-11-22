@@ -1,5 +1,7 @@
 # Live Components Lab
 
+![Live Components Lab dashboard](../../docs/images/stress-lab.png)
+
 A Go workbench for the Live Components public DOM API. The dashboard follows the
 provided design, with measured metrics, a throughput chart, SSE output, a component
 preview, and session results. go-api-kit serves the dashboard, JSON endpoints,

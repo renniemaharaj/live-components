@@ -1,5 +1,7 @@
 # Counter starter
 
+![Live Components counter starter](../../docs/images/counter.png)
+
 A small Live Components example: ordinary HTML, go-api-kit, and a counter that
 works without JavaScript. The page uses the cyan, purple, and pink brand palette.
 
