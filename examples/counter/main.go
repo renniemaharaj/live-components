@@ -12,6 +12,7 @@ import (
 	"time"
 
 	live "github.com/renniemaharaj/live-components"
+	"github.com/renniemaharaj/live-components/livehttp"
 
 	"github.com/renniemaharaj/go-api-kit/kit"
 	"github.com/renniemaharaj/go-api-kit/v8"
@@ -62,16 +63,11 @@ func newHandler() (http.Handler, error) {
 			return
 		}
 
-		// Each request owns its DOM tree. The embedded HTML stays unchanged.
-		page, err := live.Parse(string(markup))
+		page, err := renderCounter(string(markup), value)
 		if err != nil {
 			h.Error.Handle(err)
 			return
 		}
-
-		count = strconv.FormatInt(value, 10)
-		page.GetElementById("count").SetTextContent(count)
-		page.GetElementById("current-count").SetAttribute("value", count)
 
 		h.Writer().Header().Set("Cache-Control", "no-store")
 		if err := h.Render(http.StatusOK, page); err != nil {
@@ -92,20 +88,25 @@ func newHandler() (http.Handler, error) {
 			return
 		}
 
-		switch r.PostForm.Get("action") {
-		case "increment":
-			count++
-		case "decrement":
-			count--
-		case "reset":
-			count = 0
-		default:
-			h.Error.BadRequest("Invalid counter action.")
+		count, err = nextCount(count, r.PostForm.Get("action"))
+		if err != nil {
+			h.Error.BadRequest(err.Error())
 			return
 		}
 
-		if count < math.MinInt32 || count > math.MaxInt32 {
-			h.Error.BadRequest("Counter limit reached.")
+		if r.Header.Get("Accept") == "application/json" {
+			page, err := renderCounter(string(markup), count)
+			if err != nil {
+				h.Error.Handle(err)
+				return
+			}
+
+			if err := livehttp.WriteUpdates(h.Writer(),
+				page.GetElementById("count"),
+				page.GetElementById("counter-state"),
+			); err != nil {
+				log.Printf("update counter: %v", err)
+			}
 			return
 		}
 
@@ -113,12 +114,69 @@ func newHandler() (http.Handler, error) {
 		h.Redirect("/?count="+strconv.FormatInt(count, 10), http.StatusSeeOther)
 	}
 
-	return v8.NewHandler(nil, func(router *kit.Router) {
+	middleware, err := kit.DefaultMiddleware()
+	if err != nil {
+		return nil, err
+	}
+
+	// Kit documents its timeout as the second default middleware.
+	// Skip only that buffer on the WebSocket route; retain authentication and limits.
+	requestTimeout := middleware[1]
+	middleware[1] = func(next http.Handler) http.Handler {
+		timed := requestTimeout(next)
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Path == "/counter/live" {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			timed.ServeHTTP(w, r)
+		})
+	}
+
+	return v8.NewHandlerWithMiddleware(nil, middleware, func(router *kit.Router) {
 		files := http.StripPrefix("/static/", http.FileServerFS(static))
 		router.Handle(http.MethodGet, "/static/*", files)
 		router.Handle(http.MethodHead, "/static/*", files)
+		runtime := livehttp.RuntimeHandler()
+		router.Handle(http.MethodGet, "/live.js", runtime)
+		router.Handle(http.MethodHead, "/live.js", runtime)
 		router.Get("/", showPage)
 		router.Head("/", showPage)
 		router.Post("/counter", changeCount)
+		router.Handle(http.MethodGet, "/counter/live", counterSocket(string(markup)))
 	})
+}
+
+func nextCount(count int64, action string) (int64, error) {
+	switch action {
+	case "increment":
+		count++
+	case "decrement":
+		count--
+	case "reset":
+		count = 0
+	default:
+		return 0, fmt.Errorf("Invalid counter action.")
+	}
+
+	if count < math.MinInt32 || count > math.MaxInt32 {
+		return 0, fmt.Errorf("Counter limit reached.")
+	}
+
+	return count, nil
+}
+
+func renderCounter(markup string, value int64) (*live.Component, error) {
+	// Each request owns its DOM tree. The embedded HTML stays unchanged.
+	page, err := live.Parse(markup)
+	if err != nil {
+		return nil, err
+	}
+
+	count := strconv.FormatInt(value, 10)
+	page.GetElementById("count").SetTextContent(count)
+	page.GetElementById("current-count").SetAttribute("value", count)
+
+	return page, nil
 }

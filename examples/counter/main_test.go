@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -9,6 +10,7 @@ import (
 	"testing"
 
 	live "github.com/renniemaharaj/live-components"
+	"github.com/renniemaharaj/live-components/livehttp"
 )
 
 func TestCounterFormFlow(t *testing.T) {
@@ -93,6 +95,72 @@ func TestCounterRejectsInvalidForms(t *testing.T) {
 
 		if response.Code != http.StatusBadRequest {
 			t.Fatalf("invalid form returned %d", response.Code)
+		}
+	}
+}
+
+func TestCounterFragmentFlow(t *testing.T) {
+	handler, err := newHandler()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, step := range []struct {
+		count  string
+		action string
+		want   string
+	}{
+		{count: "0", action: "increment", want: "1"},
+		{count: "1", action: "increment", want: "2"},
+		{count: "0", action: "decrement", want: "-1"},
+		{count: "42", action: "reset", want: "0"},
+	} {
+		t.Run(step.count+"/"+step.action, func(t *testing.T) {
+			body := url.Values{
+				"count":  {step.count},
+				"action": {step.action},
+			}
+			request := httptest.NewRequest(http.MethodPost, "/counter", strings.NewReader(body.Encode()))
+			request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+			request.Header.Set("Accept", "application/json")
+			response := httptest.NewRecorder()
+			handler.ServeHTTP(response, request)
+
+			if response.Code != http.StatusOK || response.Header().Get("Location") != "" ||
+				response.Header().Get("Content-Type") != "application/json; charset=utf-8" {
+				t.Fatalf("fragment response: %d %s", response.Code, response.Body.String())
+			}
+
+			var payload struct {
+				Updates []livehttp.Update `json:"updates"`
+			}
+			if err := json.Unmarshal(response.Body.Bytes(), &payload); err != nil {
+				t.Fatal(err)
+			}
+
+			if len(payload.Updates) != 2 ||
+				payload.Updates[0].ID != "count" || payload.Updates[0].HTML != step.want ||
+				payload.Updates[1].ID != "counter-state" {
+				t.Fatalf("unexpected fragment targets: %s", response.Body.String())
+			}
+
+			state, err := live.Parse(payload.Updates[1].HTML)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			value, _ := state.GetElementById("current-count").GetAttribute("value")
+			if value != step.want {
+				t.Fatalf("hidden count = %q, want %q", value, step.want)
+			}
+		})
+	}
+
+	for _, path := range []string{"/live.js", "/static/app.js"} {
+		response := httptest.NewRecorder()
+		handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, path, nil))
+		if response.Code != http.StatusOK || response.Body.Len() == 0 {
+			t.Fatalf("missing browser asset %s: %d", path, response.Code)
 		}
 	}
 }

@@ -31,6 +31,10 @@ runtime or frontend build step, and can render complete pages or component fragm
   updated pages, including when JavaScript is disabled.
 - **HTMX:** optionally add [HTMX](https://htmx.org/docs/) attributes and its browser
   library to request HTML fragments and update selected components in place.
+- **Targeted updates:** use `livehttp` for request-based updates or `livews` for
+  bidirectional updates over Gorilla WebSocket. Both use the same small browser
+  module: Go selects elements by ID and sends their inner HTML; the browser updates
+  only those elements. See [targeted browser updates](docs/api.md#targeted-browser-updates).
 - **Custom JavaScript:** use the same rendered HTML with `fetch`, SSE, WebSockets,
   or another browser integration suited to your application.
 
@@ -59,7 +63,9 @@ This combines a native Go backend with the browser experience each application n
 
 A small Go + HTML starter with increment, decrement, and reset. Works without
 JavaScript, with [go-api-kit](https://github.com/renniemaharaj/go-api-kit) serving
-the page and form requests.
+the page and form requests. With JavaScript enabled, the optional runtime updates
+just the count and its hidden state container in place.
+WebSocket is the default; open `/?transport=http` to try request-based updates.
 
 ![Live Components counter starter](docs/images/counter.png)
 
@@ -76,8 +82,8 @@ Open **http://127.0.0.1:9121**.
 
 ## Examples
 
-- [Counter starter](examples/counter/README.md): native forms and HTML responses;
-  fully functional with JavaScript disabled.
+- [Counter starter](examples/counter/README.md): targeted fragment updates with
+  native forms and complete HTML responses when JavaScript is disabled.
 - [Live Components Lab](examples/stress/README.md): component previews, stress tests,
   and benchmarks; uses JavaScript for live telemetry and preview updates.
 

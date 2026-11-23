@@ -149,9 +149,178 @@ containing HTML whitespace return an error without modifying the attribute.
 `Contains` returns false for invalid tokens. Unicode spaces that are not HTML
 whitespace remain part of the token.
 
+## Targeted browser updates
+
+The optional `livehttp` package serves a small shared ES module and writes targeted
+HTML responses. `livews` sends the same payload over Gorilla WebSocket connections.
+The rendering package itself still needs no browser JavaScript or frontend build step.
+
+```go
+import "github.com/renniemaharaj/live-components/livehttp"
+
+mux := http.NewServeMux()
+mux.Handle("/live.js", livehttp.RuntimeHandler())
+mux.HandleFunc("POST /refresh", func(w http.ResponseWriter, r *http.Request) {
+    page, err := live.Parse(`<span id="counter-value">0</span>`)
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
+
+    value := page.GetElementById("counter-value")
+    value.SetTextContent("42")
+
+    if err := livehttp.WriteUpdates(w, value); err != nil {
+        log.Printf("write updates: %v", err)
+    }
+})
+```
+
+Import the browser module from an application script loaded with `type="module"`:
+
+```js
+import { update } from "/live.js";
+
+document.getElementById("refresh").addEventListener("click", async () => {
+  await update("/refresh", { method: "POST" });
+});
+```
+
+`update(url, options)` accepts ordinary `fetch` options and requests JSON with
+`Accept: application/json`. It checks the HTTP status and applies the response's
+`updates` array. It returns that array and rejects on HTTP, network, or decoding errors.
+Applications decide which interactions make requests and how to display errors.
+
+The wire format is:
+
+```json
+{"updates":[{"id":"counter-value","html":"42"}]}
+```
+
+`WriteUpdates(w, elements...)` sends each element's current `InnerHTML()`, in the
+order supplied. It requires nonempty, unique target IDs and validates the batch
+before writing headers or a body. No targets produces an empty array. Responses
+use `application/json; charset=utf-8` and `Cache-Control: no-store`.
+
+The browser assigns each fragment to `document.getElementById(id).innerHTML`.
+Missing browser targets are skipped. Each target element keeps its identity,
+attributes, and listeners; its children are recreated. Elements outside those
+targets keep their values, focus, and listeners. Only use HTML produced by your
+application, with user text escaped through methods such as `SetTextContent`.
+
+Go explicitly selects the smallest useful container with an ID. To change text,
+target its span or output. To change a child's attributes, insert children, or
+remove children, target their nearest suitable parent. Avoid targeting a form
+or other broad container when only one value changes. There is no automatic
+tree diff, attribute patching, form interception, or input preservation layer.
+If targets overlap, updates apply in order; prefer selecting the parent once.
+
+`live.NewUpdates(elements...)` builds a `live.UpdateBatch` without writing it to
+a transport. Each entry is a `live.Update`; `livehttp.Update` remains an alias.
+The batch contains a snapshot of the selected elements' HTML, so later changes
+to a rendering tree do not change earlier batches. `applyUpdates(updates)` is
+also exported for applications using another transport, such as SSE.
+
+The [counter example](../examples/counter/README.md) shows two small targets,
+HTTP and WebSocket actions through the module, and native form fallback.
+
+## WebSocket updates with Gorilla
+
+`livehttp` remains the request-based transport. Use `livews.WriteUpdates` with an
+ordinary `*websocket.Conn` for persistent, bidirectional updates. Both transports
+use the same `{"updates":[{"id":"counter-value","html":"42"}]}` format and the
+same browser DOM updater.
+
+```go
+import (
+    "github.com/gorilla/websocket"
+    "github.com/renniemaharaj/live-components/livews"
+)
+
+upgrader := websocket.Upgrader{HandshakeTimeout: 5 * time.Second}
+mux.HandleFunc("GET /live", func(w http.ResponseWriter, r *http.Request) {
+    page, err := live.Parse(`<span id="counter-value">0</span>`)
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
+
+    conn, err := upgrader.Upgrade(w, r, nil)
+    if err != nil {
+        return
+    }
+    defer conn.Close()
+    conn.SetReadLimit(4096)
+
+    value := page.GetElementById("counter-value")
+    for {
+        var action struct {
+            Value string `json:"value"`
+        }
+        if err := conn.ReadJSON(&action); err != nil {
+            return
+        }
+
+        value.SetTextContent(action.Value)
+        if err := conn.SetWriteDeadline(time.Now().Add(10 * time.Second)); err != nil {
+            return
+        }
+
+        if err := livews.WriteUpdates(conn, value); err != nil {
+            return
+        }
+    }
+})
+```
+
+The browser connects once and applies each incoming update automatically:
+
+```js
+import { connect } from "/live.js";
+
+const socket = connect("/live");
+
+socket.addEventListener("open", () => {
+  socket.send(JSON.stringify({ value: "42" }));
+});
+
+socket.addEventListener("updateerror", (event) => {
+  console.error(event.detail);
+});
+```
+
+`connect(url)` returns a native `WebSocket`. Relative URLs resolve against the
+page, with HTTP converted to `ws:` and HTTPS converted to `wss:`. Use the native
+`open`, `error`, and `close` events and send application actions with `send()`
+after the connection opens. Incoming JSON is passed to the same `applyUpdates`
+function used by HTTP. A JSON message with an `error` string emits `updateerror`
+with an `Error` in `event.detail` and leaves the DOM unchanged. JSON parsing or
+update application failures also emit that event.
+
+Go can send updates without waiting for a client action. Keep one rendering tree
+per connection or otherwise give it a single owner. Cache target references when
+reusing the tree. For fan-out to many clients, build a batch with `live.NewUpdates`
+and use Gorilla's prepared messages rather than repeatedly rendering the same HTML.
+
+Gorilla requires one reader and one writer per connection. Serialize updates and
+other data writes in one writer goroutine or under a mutex. Configure upgrades,
+origins, deadlines, read limits, heartbeat, and connection lifetime in your server.
+Keep Gorilla's default same-origin check unless your application needs a defined
+cross-origin policy. See [Gorilla's documentation](https://pkg.go.dev/github.com/gorilla/websocket).
+
+The module does not reconnect or replay actions after a disconnect. Applications
+choose when to reconnect and fetch current state, avoiding accidental duplicate
+actions. The counter reports a closed connection and offers a reload or HTTP mode.
+
+The counter reuses one tree per WebSocket, pools write buffers, sends initial state
+without a client action, and uses ping/pong heartbeats and bounded writes. Its
+WebSocket route bypasses the kit's buffering timeout while keeping the other
+default middleware. Servers must support HTTP connection hijacking for upgrades.
+
 ## Go conventions and compatibility
 
-- Public types are `Component`, `Document`, `Element`, and `ClassList`.
+- Public rendering types are `Component`, `Document`, `Element`, and `ClassList`.
+  `Update`, `UpdateBatch`, and `NewUpdates` define transport-independent updates.
 - Read methods tolerate nil and zero-value receivers, returning empty results.
   Simple setters and `Remove` are no-ops on absent nodes. Structural mutations and
   `SetInnerHTML` return errors on absent nodes. Check query results when an element
@@ -169,7 +338,8 @@ whitespace remain part of the token.
   synchronization hooks.
 - Tree access is synchronous and not safe for concurrent mutation. This package
   does not implement browser events, layout, live collections, or client state
-  synchronization.
+  synchronization. Optional HTTP delivery and explicit browser updates are
+  provided separately by `livehttp` and `livews`.
 
 See [the API review](api-review.md) for the complete public-surface review and
 rationale. Run `go test ./... ./examples/...` to check the library and both examples.

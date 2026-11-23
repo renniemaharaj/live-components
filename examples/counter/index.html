@@ -8,6 +8,7 @@
     <title>Live Components · A little Go. A lot of possibility.</title>
     <link rel="icon" type="image/svg+xml" href="/static/logo.svg">
     <link rel="stylesheet" href="/static/style.css">
+    <script type="module" src="/static/app.js"></script>
   </head>
   <body>
     <header class="site-header">
@@ -32,8 +33,10 @@
             <span class="counter-label">COUNTER</span>
             <span class="server-label">Rendered in Go</span>
           </div>
-          <form action="/counter" method="post">
-            <input id="current-count" type="hidden" name="count" value="0">
+          <form id="counter-form" action="/counter" method="post">
+            <span id="counter-state" hidden>
+              <input id="current-count" type="hidden" name="count" value="0">
+            </span>
             <div class="counter-controls">
               <button
                 class="step-button decrement"
@@ -58,17 +61,22 @@
           </form>
         </div>
 
-        <p class="hint">Try the buttons. This works with JavaScript turned off.</p>
+        <p id="counter-feedback" class="hint" role="status">Try the buttons. Updates stay in place; this also works with JavaScript turned off.</p>
+        <p class="hint">
+          <a href="/?transport=websocket">WebSocket updates</a>
+          <span aria-hidden="true"> · </span>
+          <a href="/?transport=http">HTTP updates</a>
+        </p>
         <div class="features" aria-label="Built with">
           <span>Go on the server</span>
           <span>HTML in the browser</span>
-          <span>Zero JavaScript</span>
+          <span>Tiny optional runtime</span>
         </div>
 
         <details id="how-it-works" class="how-it-works">
           <summary>Small example. Real components.</summary>
           <div class="explanation">
-            <p>The form sends the count to a go-api-kit route. Go changes the value, redirects here, and updates a fresh HTML tree with Live Components.</p>
+            <p>Choose WebSocket or HTTP updates. Go sends new inner HTML for just the count and its hidden state container. The rest of the page stays in place.</p>
             <pre><code><span class="code-comment">// Parse HTML. Find an element. Make it yours.</span>
 page, err := live.Parse(markup)
 <span class="code-keyword">if</span> err != nil {
@@ -79,7 +87,7 @@ page.GetElementById(<span class="code-string">"count"</span>).SetTextContent(cou
 <span class="code-keyword">if</span> err := h.Render(http.StatusOK, page); err != nil {
     log.Printf(<span class="code-string">"render counter: %v"</span>, err)
 }</code></pre>
-            <p class="explanation-note">The count travels in the form and URL. Each request gets its own tree; your template file stays untouched.</p>
+            <p class="explanation-note">Without JavaScript, the same form redirects to the updated page. Each request gets its own tree; your template file stays untouched.</p>
           </div>
         </details>
       </section>

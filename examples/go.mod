@@ -3,6 +3,7 @@ module github.com/renniemaharaj/live-components/examples
 go 1.25.3
 
 require (
+	github.com/gorilla/websocket v1.5.3
 	github.com/renniemaharaj/go-api-kit v0.0.0
 	github.com/renniemaharaj/live-components v0.0.0
 	golang.org/x/net v0.40.0
